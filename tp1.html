@@ -160,7 +160,7 @@
             const lastMonthWater = parseFloat(row.cells[3].innerText) || 0;
             const currentWater = parseFloat(row.cells[4].innerText) || 0;
 
-            const electricityBill = (currentElec - lastMonthElec) * 1.4;
+            const electricityBill = (currentElec - lastMonthElec) * 2;
             const waterBill = (currentWater - lastMonthWater) * 12;
             const totalBill = electricityBill + waterBill;
 
