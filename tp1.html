@@ -20,6 +20,7 @@
             display: flex;
             justify-content: center;
             gap: 10px;
+            flex-wrap: wrap;
         }
         input, button {
             padding: 10px;
@@ -45,10 +46,25 @@
         th, td {
             border: 1px solid #ddd;
             padding: 10px;
+            word-wrap: break-word;
         }
         th {
             background-color: #007bff;
             color: white;
+        }
+        @media (max-width: 600px) {
+            th, td {
+                font-size: 14px;
+                padding: 8px;
+            }
+            input, button {
+                font-size: 14px;
+                padding: 8px;
+            }
+        }
+        /* Screenshot table is hidden by default */
+        .screenshot-table {
+            display: none;
         }
     </style>
 </head>
@@ -80,12 +96,26 @@
         </tbody>
     </table>
 
+    <!-- Temporary table for screenshot functionality -->
+    <table class="screenshot-table" id="screenshotTable">
+        <thead>
+            <tr>
+                <th>رقم الشقة</th>
+                <th>الإجمالي</th> <!-- Total amount now in second column -->
+                <th>فاتورة الكهرباء</th>
+                <th>فاتورة الماء</th>
+            </tr>
+        </thead>
+        <tbody>
+        </tbody>
+    </table>
+
     <script>
         const table = document.getElementById("apartmentTable").getElementsByTagName("tbody")[0];
+        const screenshotTable = document.getElementById("screenshotTable").getElementsByTagName("tbody")[0];
         const inputField = document.getElementById("apartmentNumber");
         const jsonFileName = "apartment_data.json";
 
-        // Add a row when the Enter key is pressed in the input field
         inputField.addEventListener("keypress", function (event) {
             if (event.key === "Enter") {
                 addRow();
@@ -93,14 +123,13 @@
             }
         });
 
-        // Load data from local storage on startup
         window.onload = function () {
             const savedData = localStorage.getItem(jsonFileName);
             if (savedData) {
                 const data = JSON.parse(savedData);
                 data.forEach((entry) => {
                     const row = table.insertRow();
-                    row.innerHTML = `
+                    row.innerHTML = `  
                         <td contenteditable="true">${entry["رقم الشقة"]}</td>
                         <td contenteditable="true" oninput="updateRow(this)">${entry["الكهرباء الشهر الماضي"]}</td>
                         <td contenteditable="true" oninput="updateRow(this)">${entry["الكهرباء الشهر الحالي"]}</td>
@@ -110,6 +139,15 @@
                         <td>${entry["فاتورة الماء"]}</td>
                         <td>${entry["الإجمالي"]}</td>
                         <td><button onclick="removeRow(this)">حذف</button></td>
+                    `;
+
+                    // Also add to the screenshot table (now with the total amount second)
+                    const screenshotRow = screenshotTable.insertRow();
+                    screenshotRow.innerHTML = `
+                        <td>${entry["رقم الشقة"]}</td>
+                        <td>${entry["الإجمالي"]}</td> <!-- Now the total amount is second -->
+                        <td>${entry["فاتورة الكهرباء"]}</td>
+                        <td>${entry["فاتورة الماء"]}</td>
                     `;
                 });
             }
@@ -138,7 +176,7 @@
             if (!apartmentNumber) return alert("يرجى إدخال رقم الشقة!");
 
             const row = table.insertRow();
-            row.innerHTML = `
+            row.innerHTML = `  
                 <td contenteditable="true">${apartmentNumber}</td>
                 <td contenteditable="true" oninput="updateRow(this)">0</td>
                 <td contenteditable="true" oninput="updateRow(this)">0</td>
@@ -168,6 +206,12 @@
             row.cells[6].innerText = waterBill.toFixed(2);
             row.cells[7].innerText = totalBill.toFixed(2);
 
+            // Update screenshot table
+            const screenshotRow = screenshotTable.rows[row.rowIndex];
+            screenshotRow.cells[1].innerText = totalBill.toFixed(2); // Total amount is now second
+            screenshotRow.cells[2].innerText = electricityBill.toFixed(2);
+            screenshotRow.cells[3].innerText = waterBill.toFixed(2);
+
             saveToLocalStorage();
         }
 
@@ -178,11 +222,16 @@
         }
 
         function saveAsImage() {
-            html2canvas(document.body).then((canvas) => {
+            // Show only the screenshot table for the screenshot
+            document.querySelector('.screenshot-table').style.display = 'table';
+            html2canvas(document.querySelector('.screenshot-table')).then((canvas) => {
                 const a = document.createElement("a");
                 a.href = canvas.toDataURL("image/png");
                 a.download = "table_screenshot.png";
                 a.click();
+
+                // Hide the screenshot table again
+                document.querySelector('.screenshot-table').style.display = 'none';
             });
         }
     </script>
